@@ -5,14 +5,17 @@ A local pipeline that scrapes promotions from [The Promenade Shops at Briargate]
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) 24+
-- [Docker](https://www.docker.com/) (for Postgres)
+- Postgres, using one of:
+  - [Docker](https://www.docker.com/) with Docker Desktop/daemon running (default reviewer path)
+  - An already-running local Postgres instance
+  - A cloud Postgres database reachable from your machine
 
 ## Quickstart
 
-From a clean clone, this is the reviewer path:
+From a clean clone, this is the reviewer path. It is intentionally two copy-paste terminal commands: clone/enter the repo, then install/setup/run.
 
 ```bash
-git clone <repo-url> && cd promotions-aggregator
+git clone https://github.com/ojov/promotions-aggregator.git && cd promotions-aggregator
 npm install && npm run local
 ```
 
@@ -25,6 +28,8 @@ npm install && npm run local
 5. Runs the initial scrape (~5–8 minutes)
 
 Leave `npm run local` running after setup completes. The API and UI will stay up in that terminal.
+
+The default quickstart assumes Docker is running and uses `docker-compose.yml` to start a local Postgres container. To use an existing local or cloud Postgres instead, copy `.env.example` to `.env`, set `DATABASE_URL`, and run the manual setup commands below.
 
 | Service | URL |
 |---------|-----|
@@ -42,6 +47,54 @@ All variables have working defaults in `.env.example`. `npm run setup` copies it
 | `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:4000` | API base URL used by the browser |
 | `SCRAPER_HEADLESS` | `true` | Set to `false` to watch the browser during a scrape |
 | `SCRAPER_USER_AGENT` | `PromotionsAggregatorTakehome/0.1 (+local development)` | User-agent sent with scraper requests |
+
+## Database setup options
+
+### Option A: Docker Compose Postgres (default)
+
+This is the simplest path for reviewers. Make sure Docker Desktop/daemon is running, then use:
+
+```bash
+npm install && npm run local
+```
+
+`npm run setup` starts Postgres with:
+
+```bash
+docker compose up -d postgres
+```
+
+### Option B: Existing local Postgres
+
+Use this if you already have Postgres running locally and do not want Docker:
+
+```bash
+cp .env.example .env
+# Edit DATABASE_URL in .env to point at your local database.
+npm install
+npm run db:migrate
+npm run scrape
+npm run dev
+```
+
+Example local connection string:
+
+```bash
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/promotions?schema=public"
+```
+
+### Option C: Cloud Postgres
+
+Use this if you have a hosted Postgres database. Set `DATABASE_URL` in `.env` to the provider's connection string, then run:
+
+```bash
+npm install
+npm run db:migrate
+npm run scrape
+npm run dev
+```
+
+Make sure the database allows connections from your machine. Do not commit `.env`.
 
 ## Useful commands
 
@@ -102,7 +155,7 @@ scripts/      setup.mjs — one-command local bootstrap
 
 ## Infrastructure
 
-Only Postgres runs in Docker. The API and web servers run as local Node processes.
+Only Postgres runs in Docker when using the default setup path. The API and web servers run as local Node processes.
 
 ```bash
 # Start / stop Postgres independently

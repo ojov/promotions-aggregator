@@ -20,7 +20,7 @@ export type DirectoryStore = {
 };
 
 const SOCIAL_LINK_REGIONS =
-  'header, footer, nav, [class*="social" i], [aria-label*="social" i], [class*="follow" i], [aria-label*="follow" i]';
+  'header, footer, nav, [class*="social" i], [aria-label*="social" i], [class*="follow" i], [aria-label*="follow" i], [data-dan-component*="social-icons" i], [data-testid*="social" i], [data-link-name*="twitter" i], [data-link-name*="facebook" i], [data-link-name*="instagram" i], [data-link-name*="tiktok" i], [data-link-name*="youtube" i], [data-link-name*="pinterest" i], [aria-label*="twitter" i], [aria-label*="facebook" i], [aria-label*="instagram" i], [aria-label*="tiktok" i], [aria-label*="youtube" i], [aria-label*="pinterest" i]';
 
 export function absoluteUrl(href: string): string {
   return new URL(href, BASE_URL).toString();
@@ -200,8 +200,9 @@ export function parseSocialLinksFromHtml(html: string, pageUrl: string): SocialL
 }
 
 export function isBotChallengePage(html: string): boolean {
-  return /just a moment|checking your browser|cf-chl|cloudflare|verify you are human/i.test(
-    html
+  return (
+    /just a moment|checking your browser|verify you are human/i.test(html) ||
+    /id="cf-wrapper"|id="cf-challenge-running"|name="cf_captcha_kind"/i.test(html)
   );
 }
 
