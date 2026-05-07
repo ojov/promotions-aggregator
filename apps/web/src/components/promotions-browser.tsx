@@ -228,10 +228,10 @@ function BrandGroup({
       <header>
         <div>
           <h2>{brand.name}</h2>
-          <p>{promotions.length} promotions on this page</p>
+          <p>{promotions.length} promotion{promotions.length !== 1 ? "s" : ""} on this page</p>
         </div>
-        <BrandMetadata brand={brand} />
       </header>
+      <BrandMetadata brand={brand} />
       <div className="grid">
         {promotions.map((promotion) => (
           <PromotionCard key={promotion.id} promotion={promotion} />
@@ -274,36 +274,29 @@ function PromotionCard({ promotion }: { promotion: Promotion }) {
 
 function BrandMetadata({ brand }: { brand: Brand }) {
   return (
-    <dl className="metadata">
-      <div>
-        <dt>Website</dt>
-        <dd>
-          {brand.websiteUrl ? (
-            <a href={brand.websiteUrl} target="_blank" rel="noreferrer">
-              Visit website
-            </a>
-          ) : (
-            "Not found"
-          )}
-        </dd>
-      </div>
-      <div>
-        <dt>Hours</dt>
-        <dd>{brand.hours.length > 0 ? brand.hours.join(" | ") : "Not found"}</dd>
-      </div>
-      <div>
-        <dt>Social</dt>
-        <dd>
-          {brand.socialLinks.length > 0
-            ? brand.socialLinks.map((link) => (
-                <a key={`${link.platform}-${link.url}`} href={link.url}>
-                  {link.platform}
-                </a>
-              ))
-            : "Not found"}
-        </dd>
-      </div>
-    </dl>
+    <div className="brand-meta-strip" aria-label={`${brand.name} store details`}>
+      <span>
+        Website:{" "}
+        {brand.websiteUrl ? (
+          <a href={brand.websiteUrl} target="_blank" rel="noreferrer">
+            visit
+          </a>
+        ) : (
+          "not found"
+        )}
+      </span>
+      <span>Hours: {brand.hours.length > 0 ? brand.hours.join(" | ") : "not found"}</span>
+      <span>
+        Social:{" "}
+        {brand.socialLinks.length > 0
+          ? brand.socialLinks.map((link) => (
+              <a key={`${link.platform}-${link.url}`} href={link.url} target="_blank" rel="noreferrer">
+                {link.platform}
+              </a>
+            ))
+          : "not found"}
+      </span>
+    </div>
   );
 }
 

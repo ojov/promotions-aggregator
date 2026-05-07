@@ -6,6 +6,18 @@ This project is a small TypeScript monorepo with a Next.js frontend, a separate 
 
 The data flow is intentionally linear:
 
+```mermaid
+flowchart LR
+  SalesPage[Sales page] --> Scraper[Scraper]
+  DealPages[Deal detail pages] --> Scraper
+  StorePages[Store directory pages] --> Scraper
+  BrandWebsites[Brand websites] --> Scraper
+  Scraper --> SharedSchemas[Shared Zod schemas]
+  SharedSchemas --> Postgres[(Postgres)]
+  Postgres --> Api[Express API]
+  Api --> Ui[Next.js UI]
+```
+
 1. Scrape the Promenade Shops sales page and promotion detail pages.
 2. Enrich each promotion with brand data from the same site's store directory pages.
 3. If a brand website is available, visit that homepage once to collect brand-owned social profile links.
@@ -24,6 +36,37 @@ Brand social links are collected from the mall store page when available. If the
 ## Schema Choices
 
 Brands are normalized into their own table because multiple promotions share the same brand metadata and `/brands` needs promotion counts. Promotions reference brands by ID and store scrape metadata such as `sourcePortal`, `sourceUrl`, and `scrapedAt`.
+
+```mermaid
+erDiagram
+  Brand ||--o{ Promotion : has
+  Brand {
+    string id
+    string sourceId
+    string name
+    string websiteUrl
+    json hours
+    json socialLinks
+  }
+  Promotion {
+    string id
+    string sourceId
+    string title
+    datetime startDate
+    datetime endDate
+    string brandId
+  }
+  ScrapeRun {
+    string id
+    string status
+    datetime startedAt
+    datetime finishedAt
+    int promotionsFound
+    int promotionsSaved
+    int brandsSaved
+    json errors
+  }
+```
 
 `ScrapeRun` records start/end timestamps, status, counts, and errors. This makes `POST /scrape` observable even though the MVP trigger runs synchronously.
 
