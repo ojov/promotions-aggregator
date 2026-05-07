@@ -8,15 +8,18 @@ The data flow is intentionally linear:
 
 1. Scrape the Promenade Shops sales page and promotion detail pages.
 2. Enrich each promotion with brand data from the same site's store directory pages.
-3. Validate normalized records with shared Zod schemas.
-4. Upsert brands and promotions into Postgres.
-5. Serve typed REST responses to the UI.
+3. If a brand website is available, visit that homepage once to collect brand-owned social profile links.
+4. Validate normalized records with shared Zod schemas.
+5. Upsert brands and promotions into Postgres.
+6. Serve typed REST responses to the UI.
 
 ## Scraping Approach
 
 The source brief notes that naive HTTP clients can behave unexpectedly, so the scraper uses Playwright. It loads real pages with browser-like headers, then parses stable links and text from the rendered DOM. Cheerio is used for focused HTML parsing in helper functions and tests where a browser is unnecessary.
 
 The scraper is polite by design: it uses low concurrency, waits between page visits, sets a descriptive user agent, and records per-record failures instead of crashing the whole run. Re-scrapes are idempotent because source IDs are derived from canonical `/deals/{id}/` and `/stores/{id-slug}/` URLs.
+
+Brand social links are collected from the mall store page when available. If the store page exposes a brand website, the scraper also visits that website's homepage once and extracts recognized social profile links. External brand-site failures are non-fatal because website social enrichment should not block the core mall scrape.
 
 ## Schema Choices
 
