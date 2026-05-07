@@ -1,0 +1,286 @@
+:root {
+  color: #172033;
+  background: #f5f7fb;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f5f7fb;
+}
+
+a {
+  color: #2456d6;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.shell {
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 40px 24px;
+}
+
+.hero {
+  align-items: end;
+  background: linear-gradient(135deg, #172033, #344a78);
+  border-radius: 28px;
+  color: white;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 220px 1fr;
+  margin-bottom: 24px;
+  padding: 36px;
+}
+
+.hero h1 {
+  font-size: clamp(2rem, 5vw, 4rem);
+  line-height: 1;
+  margin: 0 0 12px;
+}
+
+.hero p {
+  margin: 0;
+  max-width: 680px;
+}
+
+.eyebrow {
+  color: #b9c7ff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.toolbar {
+  align-items: end;
+  background: white;
+  border: 1px solid #dbe1ef;
+  border-radius: 20px;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr 260px auto;
+  padding: 18px;
+}
+
+.toolbar label {
+  color: #5b6680;
+  display: grid;
+  font-size: 0.85rem;
+  font-weight: 700;
+  gap: 6px;
+}
+
+.toolbar input,
+.toolbar select {
+  border: 1px solid #c8d0e1;
+  border-radius: 12px;
+  color: #172033;
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.segmented {
+  background: #eef2fb;
+  border-radius: 999px;
+  display: flex;
+  padding: 4px;
+}
+
+.segmented button {
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  color: #4d5871;
+  padding: 10px 14px;
+}
+
+.segmented .active {
+  background: #172033;
+  color: white;
+}
+
+.summary,
+.empty,
+.error {
+  margin: 20px 4px;
+}
+
+.error {
+  color: #b42318;
+  font-weight: 700;
+}
+
+.grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.card,
+.brand-group {
+  background: white;
+  border: 1px solid #dbe1ef;
+  border-radius: 20px;
+  box-shadow: 0 14px 34px rgba(23, 32, 51, 0.07);
+  overflow: hidden;
+}
+
+.imageWrap {
+  aspect-ratio: 16 / 10;
+  background: #e7ecf7;
+  position: relative;
+}
+
+.imageWrap img {
+  object-fit: cover;
+}
+
+.imageFallback {
+  align-items: center;
+  color: #66738c;
+  display: flex;
+  height: 100%;
+  justify-content: center;
+}
+
+.cardBody {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+}
+
+.cardBody h2,
+.brand-group h2 {
+  margin: 0;
+}
+
+.cardBody p {
+  color: #4d5871;
+  display: -webkit-box;
+  line-height: 1.5;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
+.brandName {
+  color: #2456d6 !important;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cardMeta {
+  align-items: center;
+  color: #66738c;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.brand-groups {
+  display: grid;
+  gap: 22px;
+}
+
+.brand-group {
+  padding: 22px;
+}
+
+.brand-group > header {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 240px 1fr;
+  margin-bottom: 18px;
+}
+
+.brand-group > header p {
+  color: #66738c;
+  margin: 8px 0 0;
+}
+
+.metadata {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 0;
+}
+
+.metadata dt {
+  color: #66738c;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.metadata dd {
+  margin: 0;
+}
+
+.metadata dd a + a::before {
+  color: #8d98ad;
+  content: ", ";
+}
+
+.pagination {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 28px;
+}
+
+.pagination button {
+  background: #172033;
+  border: 0;
+  border-radius: 999px;
+  color: white;
+  padding: 10px 16px;
+}
+
+@media (max-width: 900px) {
+  .hero,
+  .toolbar,
+  .brand-group > header,
+  .metadata {
+    grid-template-columns: 1fr;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .shell {
+    padding: 24px 14px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
