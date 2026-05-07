@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "./env.js";
 import { runScrape } from "./scrape.js";
 import { createPrismaClient } from "./prisma.js";
 

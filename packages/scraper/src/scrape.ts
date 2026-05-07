@@ -231,17 +231,26 @@ function fallbackBrand(detail: DetailPromotion): ScrapedBrand {
 }
 
 async function readPage(context: BrowserContext, url: string): Promise<string> {
-  const page = await context.newPage();
-  try {
-    await page.goto(url, {
-      waitUntil: "domcontentloaded",
-      timeout: 30_000
-    });
-    await page.waitForTimeout(350);
-    return await page.content();
-  } finally {
-    await page.close();
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const page = await context.newPage();
+    try {
+      await page.goto(url, {
+        waitUntil: "domcontentloaded",
+        timeout: 45_000
+      });
+      await page.waitForTimeout(350);
+      return await page.content();
+    } catch (error) {
+      lastError = error;
+      if (attempt < 2) await delay(1_500);
+    } finally {
+      await page.close();
+    }
   }
+
+  throw lastError;
 }
 
 function delay(ms: number): Promise<void> {

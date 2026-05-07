@@ -9,15 +9,14 @@ A local pipeline that scrapes promotions from [The Promenade Shops at Briargate]
 
 ## Quickstart
 
+From a clean clone, this is the reviewer path:
+
 ```bash
-git clone <repo-url>
-cd promotions-aggregator
-npm install
-npm run setup
-npm run dev
+git clone <repo-url> && cd promotions-aggregator
+npm install && npm run local
 ```
 
-`npm run setup` does the following in order:
+`npm run local` runs setup and then starts both development servers. The setup step does the following in order:
 
 1. Copies `.env.example` → `.env` (skips if `.env` already exists)
 2. Installs the Playwright Chromium browser
@@ -25,11 +24,7 @@ npm run dev
 4. Runs database migrations
 5. Runs the initial scrape (~2–4 minutes)
 
-Once setup completes, start the development servers:
-
-```bash
-npm run dev
-```
+Leave `npm run local` running after setup completes. The API and UI will stay up in that terminal.
 
 | Service | URL |
 |---------|-----|
@@ -51,6 +46,8 @@ All variables have working defaults in `.env.example`. `npm run setup` copies it
 ## Useful commands
 
 ```bash
+npm run local          # Setup from scratch, scrape, then start API and web app
+npm run setup          # Install browser, start Postgres, migrate, and scrape
 npm run dev            # Start API and web app together
 npm run dev:api        # Express API only
 npm run dev:web        # Next.js UI only
@@ -88,7 +85,7 @@ curl -X POST http://localhost:4000/scrape
 npm test
 ```
 
-Tests cover Zod schema validation (`packages/shared`), HTML parsing helpers (`packages/scraper`), and API endpoint behaviour (`apps/api`).
+Tests cover Zod schema validation (`packages/shared`), HTML parsing helpers (`packages/scraper`), and API query filtering logic (`apps/api`).
 
 ## Project structure
 
