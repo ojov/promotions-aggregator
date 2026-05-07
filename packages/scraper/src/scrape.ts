@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { chromium, type BrowserContext } from "playwright";
-import type { ScrapedBrand, ScrapedPromotion } from "@promos/shared";
+import type { ScrapedBrand, ScrapedPromotion, SocialLink } from "@promos/shared";
 import {
   BASE_URL,
   absoluteUrl,
@@ -8,6 +8,7 @@ import {
   parseDirectoryStores,
   parseListingPromotions,
   parsePromotionDetail,
+  parseSocialLinksFromHtml,
   parseStoreDetail,
   slugify,
   sourceIdFromUrl,
@@ -211,10 +212,47 @@ async function resolveBrand(
   const parsed = parseStoreDetail(await readPage(context, store.sourceUrl), store);
   const brand = {
     ...parsed,
-    hours: parsed.hours.length > 0 ? parsed.hours : detail.fallbackHours
+    hours: parsed.hours.length > 0 ? parsed.hours : detail.fallbackHours,
+    socialLinks: await enrichSocialLinksFromWebsite(parsed)
   };
   storeDetailCache.set(store.sourceId, brand);
   return brand;
+}
+
+async function enrichSocialLinksFromWebsite(
+  brand: ScrapedBrand
+): Promise<SocialLink[]> {
+  if (!brand.websiteUrl) return brand.socialLinks;
+
+  try {
+    await delay(REQUEST_DELAY_MS);
+    const websiteHtml = await fetchWebsiteHtml(brand.websiteUrl);
+    return mergeSocialLinks(
+      brand.socialLinks,
+      parseSocialLinksFromHtml(websiteHtml, brand.websiteUrl)
+    );
+  } catch {
+    return brand.socialLinks;
+  }
+}
+
+async function fetchWebsiteHtml(url: string): Promise<string> {
+  const response = await fetch(url, {
+    redirect: "follow",
+    signal: AbortSignal.timeout(5_000),
+    headers: {
+      "user-agent":
+        process.env.SCRAPER_USER_AGENT ??
+        "PromotionsAggregatorTakehome/0.1 (+local development)",
+      accept: "text/html,application/xhtml+xml"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Brand website returned ${response.status}`);
+  }
+
+  return response.text();
 }
 
 function fallbackBrand(detail: DetailPromotion): ScrapedBrand {
@@ -230,21 +268,27 @@ function fallbackBrand(detail: DetailPromotion): ScrapedBrand {
   };
 }
 
-async function readPage(context: BrowserContext, url: string): Promise<string> {
+async function readPage(
+  context: BrowserContext,
+  url: string,
+  options: { attempts?: number; timeoutMs?: number } = {}
+): Promise<string> {
   let lastError: unknown;
+  const attempts = options.attempts ?? 2;
+  const timeoutMs = options.timeoutMs ?? 45_000;
 
-  for (let attempt = 1; attempt <= 2; attempt += 1) {
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
     const page = await context.newPage();
     try {
       await page.goto(url, {
         waitUntil: "domcontentloaded",
-        timeout: 45_000
+        timeout: timeoutMs
       });
       await page.waitForTimeout(350);
       return await page.content();
     } catch (error) {
       lastError = error;
-      if (attempt < 2) await delay(1_500);
+      if (attempt < attempts) await delay(1_500);
     } finally {
       await page.close();
     }
@@ -262,4 +306,18 @@ function delay(ms: number): Promise<void> {
 function formatError(scope: string, error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
   return `${scope}: ${message}`;
+}
+
+function mergeSocialLinks(...groups: SocialLink[][]): SocialLink[] {
+  const seen = new Set<string>();
+  const merged: SocialLink[] = [];
+
+  for (const link of groups.flat()) {
+    const key = `${link.platform}:${link.url}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(link);
+  }
+
+  return merged;
 }

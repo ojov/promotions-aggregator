@@ -158,7 +158,7 @@ export function parseStoreDetail(html: string, store: DirectoryStore): ScrapedBr
     .map((_, element) => safeExternalUrl($(element).attr("href") ?? ""))
     .get()
     .filter((url): url is string => url !== null)
-    .filter((url) => !/shopsbriargate/i.test(url));
+    .filter((url) => !isMallOrVendorUrl(url));
 
   return {
     sourceId: store.sourceId,
@@ -174,6 +174,24 @@ export function parseStoreDetail(html: string, store: DirectoryStore): ScrapedBr
       })
       .filter((link): link is SocialLink => link !== null)
   };
+}
+
+export function parseSocialLinksFromHtml(html: string, pageUrl: string): SocialLink[] {
+  const $ = cheerio.load(html);
+  const links = $('a[href]')
+    .map((_, element) => safeUrl($(element).attr("href") ?? "", pageUrl))
+    .get()
+    .filter((url): url is string => url !== null);
+
+  return uniqueSocialLinks(
+    links
+      .map((url) => {
+        const platform = socialPlatform(url);
+        if (!platform || !isLikelySocialProfileUrl(url)) return null;
+        return { platform, url: stripTracking(url) };
+      })
+      .filter((link): link is SocialLink => link !== null)
+  );
 }
 
 export function parseEndDate(dateText: string | null, now: Date): Date | null {
@@ -318,6 +336,21 @@ function socialPlatform(url: string): string | null {
   return null;
 }
 
+function isLikelySocialProfileUrl(url: string): boolean {
+  const parsed = new URL(url);
+  const hostname = parsed.hostname.replace(/^www\./, "").toLowerCase();
+  const pathname = parsed.pathname.toLowerCase();
+
+  if (pathname === "/" || pathname === "") return false;
+  if (pathname.includes("/share") || pathname.includes("/sharer")) return false;
+  if (pathname.includes("/intent") || pathname.includes("/dialog")) return false;
+  if (hostname.includes("instagram") && pathname.startsWith("/explore")) return false;
+  if (hostname.includes("tiktok") && !pathname.startsWith("/@")) return false;
+  if (hostname.includes("pinterest") && pathname.startsWith("/pin/create")) return false;
+
+  return true;
+}
+
 function normalizeHours(values: string[]): string[] {
   return values
     .flatMap((value) => value.replace(/(?<!^)(Sun:)/g, "\n$1").split("\n"))
@@ -337,6 +370,50 @@ function safeExternalUrl(href: string): string | null {
   } catch {
     return null;
   }
+}
+
+function isMallOrVendorUrl(url: string): boolean {
+  const hostname = new URL(url).hostname.replace(/^www\./, "").toLowerCase();
+  return (
+    hostname.includes("shopsbriargate") ||
+    hostname.includes("hines") ||
+    hostname.includes("placewise") ||
+    url.toLowerCase().includes("shopsbriargate")
+  );
+}
+
+function safeUrl(href: string, baseUrl: string): string | null {
+  try {
+    const url = new URL(href, baseUrl);
+    if (!["http:", "https:"].includes(url.protocol)) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+function stripTracking(url: string): string {
+  const parsed = new URL(url);
+  if (socialPlatform(url)) parsed.protocol = "https:";
+  parsed.hostname = parsed.hostname.toLowerCase();
+  if (socialPlatform(url)) parsed.pathname = parsed.pathname.toLowerCase();
+  parsed.hash = "";
+  parsed.search = "";
+  return parsed.toString();
+}
+
+function uniqueSocialLinks(links: SocialLink[]): SocialLink[] {
+  const seen = new Set<string>();
+  const unique: SocialLink[] = [];
+
+  for (const link of links) {
+    const key = `${link.platform}:${link.url.toLowerCase()}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(link);
+  }
+
+  return unique;
 }
 
 function endOfDay(date: Date): Date {

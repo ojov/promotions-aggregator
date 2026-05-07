@@ -3,6 +3,7 @@ import {
   parseDirectoryStores,
   parseEndDate,
   parseListingPromotions,
+  parseSocialLinksFromHtml,
   parseStoreDetail
 } from "./parse.js";
 
@@ -36,6 +37,8 @@ describe("scraper parsing", () => {
         <li>(719) 368-6462</li>
       </ul>
       <a href="https://tradehome.com">Website</a>
+      <a href="https://www.placewise.com">Mall platform vendor</a>
+      <a href="https://www.hines.com">Mall owner</a>
       <a href="https://www.instagram.com/shopsbriargate/">Mall Instagram</a>
       <a href="tel:+17193686462">Phone</a>
     `;
@@ -67,5 +70,27 @@ describe("scraper parsing", () => {
       sourceId: "1036007-tradehome-shoes",
       name: "Tradehome Shoes"
     });
+  });
+
+  it("extracts brand social links from external brand websites", () => {
+    const html = `
+      <a href="/stores">Stores</a>
+      <a href="https://www.instagram.com/tradehomeshoesofficial/?utm_source=site">Instagram</a>
+      <a href="https://www.facebook.com/tradehomeshoes">Facebook</a>
+      <a href="https://www.instagram.com/TRADEHOMESHOESOFFICIAL/">Instagram duplicate</a>
+      <a href="https://www.tiktok.com/search?q=tradehome">TikTok search</a>
+      <a href="https://www.instagram.com/explore/tags/tradehome/">Tag page</a>
+    `;
+
+    expect(parseSocialLinksFromHtml(html, "https://tradehome.com")).toEqual([
+      {
+        platform: "Instagram",
+        url: "https://www.instagram.com/tradehomeshoesofficial/"
+      },
+      {
+        platform: "Facebook",
+        url: "https://www.facebook.com/tradehomeshoes"
+      }
+    ]);
   });
 });
