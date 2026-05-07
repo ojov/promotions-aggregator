@@ -6,6 +6,7 @@ import {
   absoluteUrl,
   normalizeName,
   parseDirectoryStores,
+  isBotChallengePage,
   parseListingPromotions,
   parsePromotionDetail,
   parseSocialLinksFromHtml,
@@ -19,6 +20,7 @@ import { createPrismaClient } from "./prisma.js";
 const SALES_URL = `${BASE_URL}/sales`;
 const DIRECTORY_URL = `${BASE_URL}/stores`;
 const REQUEST_DELAY_MS = 750;
+const BRAND_WEBSITE_CONCURRENCY = 5;
 
 export type ScrapeSummary = {
   runId: string;
@@ -137,6 +139,8 @@ export async function runScrape(prisma: PrismaClient = createPrismaClient()): Pr
       }
     }
 
+    await enrichSavedBrandSocials(prisma, Array.from(storeDetailCache.values()));
+
     const status = errors.length > 0 ? "PARTIAL" : "SUCCESS";
     await prisma.scrapeRun.update({
       where: { id: run.id },
@@ -212,21 +216,35 @@ async function resolveBrand(
   const parsed = parseStoreDetail(await readPage(context, store.sourceUrl), store);
   const brand = {
     ...parsed,
-    hours: parsed.hours.length > 0 ? parsed.hours : detail.fallbackHours,
-    socialLinks: await enrichSocialLinksFromWebsite(parsed)
+    hours: parsed.hours.length > 0 ? parsed.hours : detail.fallbackHours
   };
   storeDetailCache.set(store.sourceId, brand);
   return brand;
 }
 
-async function enrichSocialLinksFromWebsite(
-  brand: ScrapedBrand
-): Promise<SocialLink[]> {
+async function enrichSavedBrandSocials(
+  prisma: PrismaClient,
+  brands: ScrapedBrand[]
+): Promise<void> {
+  await mapWithConcurrency(brands, BRAND_WEBSITE_CONCURRENCY, async (brand) => {
+    const socialLinks = await enrichSocialLinksFromWebsite(brand);
+    if (socialLinks.length === brand.socialLinks.length) return;
+
+    await prisma.brand.update({
+      where: { sourceId: brand.sourceId },
+      data: { socialLinks }
+    });
+  });
+}
+
+async function enrichSocialLinksFromWebsite(brand: ScrapedBrand): Promise<SocialLink[]> {
   if (!brand.websiteUrl) return brand.socialLinks;
 
   try {
-    await delay(REQUEST_DELAY_MS);
     const websiteHtml = await fetchWebsiteHtml(brand.websiteUrl);
+    if (isBotChallengePage(websiteHtml)) {
+      return brand.socialLinks;
+    }
     return mergeSocialLinks(
       brand.socialLinks,
       parseSocialLinksFromHtml(websiteHtml, brand.websiteUrl)
@@ -320,4 +338,23 @@ function mergeSocialLinks(...groups: SocialLink[][]): SocialLink[] {
   }
 
   return merged;
+}
+
+async function mapWithConcurrency<T>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T) => Promise<void>
+): Promise<void> {
+  const queue = [...items];
+  const workers = Array.from(
+    { length: Math.min(concurrency, queue.length) },
+    async () => {
+      while (queue.length > 0) {
+        const item = queue.shift();
+        if (item) await mapper(item);
+      }
+    }
+  );
+
+  await Promise.all(workers);
 }

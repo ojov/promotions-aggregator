@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import type { AnyNode } from "domhandler";
 import type { ScrapedBrand, ScrapedPromotion, SocialLink } from "@promos/shared";
 import { SourcePortal } from "@promos/shared";
 
@@ -17,6 +18,9 @@ export type DirectoryStore = {
   sourceUrl: string;
   name: string;
 };
+
+const SOCIAL_LINK_REGIONS =
+  'header, footer, nav, [class*="social" i], [aria-label*="social" i], [class*="follow" i], [aria-label*="follow" i]';
 
 export function absoluteUrl(href: string): string {
   return new URL(href, BASE_URL).toString();
@@ -178,10 +182,11 @@ export function parseStoreDetail(html: string, store: DirectoryStore): ScrapedBr
 
 export function parseSocialLinksFromHtml(html: string, pageUrl: string): SocialLink[] {
   const $ = cheerio.load(html);
-  const links = $('a[href]')
-    .map((_, element) => safeUrl($(element).attr("href") ?? "", pageUrl))
-    .get()
-    .filter((url): url is string => url !== null);
+  const scopedLinks = extractSocialCandidateLinks($(SOCIAL_LINK_REGIONS), $, pageUrl);
+  const links =
+    scopedLinks.length > 0
+      ? scopedLinks
+      : extractSocialCandidateLinks($("body"), $, pageUrl);
 
   return uniqueSocialLinks(
     links
@@ -191,6 +196,12 @@ export function parseSocialLinksFromHtml(html: string, pageUrl: string): SocialL
         return { platform, url: stripTracking(url) };
       })
       .filter((link): link is SocialLink => link !== null)
+  );
+}
+
+export function isBotChallengePage(html: string): boolean {
+  return /just a moment|checking your browser|cf-chl|cloudflare|verify you are human/i.test(
+    html
   );
 }
 
@@ -313,6 +324,19 @@ function textLines(value: string): string[] {
     .filter(Boolean);
 }
 
+function extractSocialCandidateLinks(
+  scope: cheerio.Cheerio<AnyNode>,
+  $: cheerio.CheerioAPI,
+  pageUrl: string
+): string[] {
+  return scope
+    .find("a[href]")
+    .add(scope.filter("a[href]"))
+    .map((_, element) => safeUrl($(element).attr("href") ?? "", pageUrl))
+    .get()
+    .filter((url): url is string => url !== null);
+}
+
 function firstUrl(...values: Array<string | undefined>): string | null {
   for (const value of values) {
     if (!value) continue;
@@ -344,6 +368,7 @@ function isLikelySocialProfileUrl(url: string): boolean {
   if (pathname === "/" || pathname === "") return false;
   if (pathname.includes("/share") || pathname.includes("/sharer")) return false;
   if (pathname.includes("/intent") || pathname.includes("/dialog")) return false;
+  if (hostname.includes("facebook") && pathname.startsWith("/profile.php")) return false;
   if (hostname.includes("instagram") && pathname.startsWith("/explore")) return false;
   if (hostname.includes("tiktok") && !pathname.startsWith("/@")) return false;
   if (hostname.includes("pinterest") && pathname.startsWith("/pin/create")) return false;
@@ -395,8 +420,11 @@ function safeUrl(href: string, baseUrl: string): string | null {
 function stripTracking(url: string): string {
   const parsed = new URL(url);
   if (socialPlatform(url)) parsed.protocol = "https:";
-  parsed.hostname = parsed.hostname.toLowerCase();
+  parsed.hostname = parsed.hostname.toLowerCase().replace(/^www\./, "");
   if (socialPlatform(url)) parsed.pathname = parsed.pathname.toLowerCase();
+  if (socialPlatform(url) && !parsed.pathname.endsWith("/")) {
+    parsed.pathname = `${parsed.pathname}/`;
+  }
   parsed.hash = "";
   parsed.search = "";
   return parsed.toString();

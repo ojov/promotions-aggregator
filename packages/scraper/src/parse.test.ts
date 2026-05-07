@@ -78,6 +78,7 @@ describe("scraper parsing", () => {
       <a href="https://www.instagram.com/tradehomeshoesofficial/?utm_source=site">Instagram</a>
       <a href="https://www.facebook.com/tradehomeshoes">Facebook</a>
       <a href="https://www.instagram.com/TRADEHOMESHOESOFFICIAL/">Instagram duplicate</a>
+      <a href="https://www.facebook.com/profile.php?id=123">Generic Facebook profile</a>
       <a href="https://www.tiktok.com/search?q=tradehome">TikTok search</a>
       <a href="https://www.instagram.com/explore/tags/tradehome/">Tag page</a>
     `;
@@ -85,11 +86,11 @@ describe("scraper parsing", () => {
     expect(parseSocialLinksFromHtml(html, "https://tradehome.com")).toEqual([
       {
         platform: "Instagram",
-        url: "https://www.instagram.com/tradehomeshoesofficial/"
+        url: "https://instagram.com/tradehomeshoesofficial/"
       },
       {
         platform: "Facebook",
-        url: "https://www.facebook.com/tradehomeshoes"
+        url: "https://facebook.com/tradehomeshoes/"
       }
     ]);
   });

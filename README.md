@@ -22,7 +22,7 @@ npm install && npm run local
 2. Installs the Playwright Chromium browser
 3. Starts the Postgres container via Docker Compose
 4. Runs database migrations
-5. Runs the initial scrape (~2–4 minutes)
+5. Runs the initial scrape (~5–8 minutes)
 
 Leave `npm run local` running after setup completes. The API and UI will stay up in that terminal.
 
@@ -67,7 +67,7 @@ npm run scrape
 curl -X POST http://localhost:4000/scrape
 ```
 
-`POST /scrape` runs synchronously and returns a `ScrapeRun` summary when finished. A full scrape takes 2–4 minutes depending on the number of promotions listed and the 750 ms inter-request delay. See [DESIGN.md](DESIGN.md) for the reasoning behind the synchronous approach.
+`POST /scrape` runs synchronously and returns a `ScrapeRun` summary when finished. A full scrape takes roughly 5–8 minutes depending on the number of promotions listed, source-site latency, and brand website social-link enrichment. See [DESIGN.md](DESIGN.md) for the reasoning behind the synchronous approach.
 
 ## API endpoints
 
