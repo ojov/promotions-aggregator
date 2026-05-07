@@ -115,4 +115,3 @@ docker compose down
 - `POST /scrape` is synchronous — the HTTP connection stays open for the full scrape duration. A production version would enqueue a background job and return a run ID immediately.
 - The scraper uses Playwright because the source site requires a rendered DOM; scrape time is bounded by real browser page loads plus the politeness delay.
 - Brand matching between the promotions listing and the store directory is done by normalized name. Brands whose names differ significantly across pages fall back to a stub record with no hours or social links.
-- Date range filtering is supported by the API (`startDate`, `endDate` query params) but is not yet exposed in the UI.

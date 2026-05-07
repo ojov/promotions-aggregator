@@ -12,6 +12,8 @@ type ViewMode = "flat" | "grouped";
 export function PromotionsBrowser() {
   const [search, setSearch] = useState("");
   const [brand, setBrand] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [page, setPage] = useState(1);
   const [viewMode, setViewMode] = useState<ViewMode>("flat");
   const [promotions, setPromotions] = useState<PaginatedPromotions | null>(null);
@@ -38,6 +40,8 @@ export function PromotionsBrowser() {
       {
         search,
         brand,
+        startDate,
+        endDate,
         page,
         pageSize: PAGE_SIZE
       },
@@ -52,7 +56,7 @@ export function PromotionsBrowser() {
       });
 
     return () => controller.abort();
-  }, [brand, page, search]);
+  }, [brand, endDate, page, search, startDate]);
 
   const groupedPromotions = useMemo(() => {
     const groups = new Map<string, { brand: Brand; promotions: Promotion[] }>();
@@ -117,6 +121,30 @@ export function PromotionsBrowser() {
               </option>
             ))}
           </select>
+        </label>
+
+        <label>
+          Starts by
+          <input
+            type="date"
+            value={startDate}
+            onChange={(event) => {
+              setStartDate(event.target.value);
+              setPage(1);
+            }}
+          />
+        </label>
+
+        <label>
+          Ends after
+          <input
+            type="date"
+            value={endDate}
+            onChange={(event) => {
+              setEndDate(event.target.value);
+              setPage(1);
+            }}
+          />
         </label>
 
         <div className="segmented" aria-label="View mode">

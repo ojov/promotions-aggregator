@@ -11,6 +11,8 @@ const API_BASE_URL =
 export type PromotionRequest = {
   search: string;
   brand: string;
+  startDate: string;
+  endDate: string;
   page: number;
   pageSize: number;
 };
@@ -26,6 +28,8 @@ export async function fetchPromotions(
 
   if (request.search.trim()) params.set("search", request.search.trim());
   if (request.brand) params.set("brand", request.brand);
+  if (request.startDate) params.set("startDate", request.startDate);
+  if (request.endDate) params.set("endDate", request.endDate);
 
   const response = await fetch(`${API_BASE_URL}/promotions?${params.toString()}`, {
     signal

@@ -78,7 +78,7 @@ button:disabled {
   border-radius: 20px;
   display: grid;
   gap: 16px;
-  grid-template-columns: 1fr 260px auto;
+  grid-template-columns: minmax(220px, 1fr) 220px 160px 160px auto;
   padding: 18px;
 }
 
