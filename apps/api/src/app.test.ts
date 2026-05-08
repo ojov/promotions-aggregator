@@ -33,13 +33,16 @@ describe("buildPromotionWhere", () => {
       })
     );
 
-    expect(where).toMatchObject({
+    const end = new Date("2026-05-31");
+    end.setHours(23, 59, 59, 999);
+
+    expect(where).toEqual({
       AND: [
         {
-          OR: expect.any(Array)
+          OR: [{ endDate: null }, { endDate: { gte: new Date("2026-05-01") } }]
         },
         {
-          OR: expect.any(Array)
+          OR: [{ startDate: null }, { startDate: { lte: end } }]
         }
       ]
     });
