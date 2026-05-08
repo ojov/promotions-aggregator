@@ -124,7 +124,7 @@ export function PromotionsBrowser() {
         </label>
 
         <label>
-          Starts by
+          Running from
           <input
             type="date"
             value={startDate}
@@ -136,7 +136,7 @@ export function PromotionsBrowser() {
         </label>
 
         <label>
-          Ends after
+          Running through
           <input
             type="date"
             value={endDate}
